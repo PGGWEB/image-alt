@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import ImageSearchIcon from '@mui/icons-material/ImageSearch';
+import axios from 'axios';
+import robotsParser from 'robots-parser';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -39,7 +41,7 @@ function App() {
     },
   });
 
-  const handleScan = () => {
+  const handleScanSite = async () => {
     if (!url) {
       alert('Vă rugăm să introduceți un URL valid.');
       return;
@@ -48,40 +50,83 @@ function App() {
     // Resetăm rezultatele anterioare
     setImagesWithoutAlt([]);
     setImagesWithAlt([]);
-
     setLoading(true);
-    fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`)
-      .then((response) => {
-        if (response.ok) return response.json();
-        throw new Error('Eroare la preluarea conținutului.');
-      })
-      .then((data) => {
+
+    const visitedUrls = new Set();
+    const urlsToVisit = [url];
+    const domain = new URL(url).origin;
+
+    // Preluăm și interpretăm robots.txt
+    let robots;
+    try {
+      const robotsTxtUrl = `${domain}/robots.txt`;
+      const response = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(robotsTxtUrl)}`);
+      robots = robotsParser(robotsTxtUrl, response.data.contents);
+    } catch (error) {
+      console.error('Eroare la preluarea robots.txt. Continuăm fără a verifica robots.txt.', error);
+      robots = robotsParser('', '');
+    }
+
+    // Funcție pentru a aștepta un timp specificat (pentru rate limiting)
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    while (urlsToVisit.length > 0) {
+      const currentUrl = urlsToVisit.shift();
+
+      if (visitedUrls.has(currentUrl)) {
+        continue;
+      }
+
+      visitedUrls.add(currentUrl);
+
+      // Verificăm dacă URL-ul este permis de robots.txt
+      const isAllowed = robots.isAllowed(currentUrl, '*');
+      if (!isAllowed) {
+        console.log(`Accesul la ${currentUrl} este interzis de robots.txt.`);
+        continue;
+      }
+
+      try {
+        // Așteptăm 500ms între solicitări pentru a nu supraîncărca serverul
+        await delay(500);
+
+        const response = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(currentUrl)}`);
+        const data = response.data;
+
         const parser = new DOMParser();
         const doc = parser.parseFromString(data.contents, 'text/html');
-        const images = doc.querySelectorAll('img');
-        const imagesWithoutAlt = [];
-        const imagesWithAlt = [];
 
+        // Verificăm imaginile de pe pagina curentă
+        const images = doc.querySelectorAll('img');
         images.forEach((img) => {
           const src = img.getAttribute('src');
-          if (!src) return; // Sărim peste imaginile fără atribut src
-          const absoluteSrc = new URL(src, url).href;
+          if (!src) return;
+          const absoluteSrc = new URL(src, currentUrl).href;
           if (!img.hasAttribute('alt') || img.getAttribute('alt').trim() === '') {
-            imagesWithoutAlt.push(absoluteSrc);
+            setImagesWithoutAlt((prev) => [...prev, absoluteSrc]);
           } else {
-            imagesWithAlt.push(absoluteSrc);
+            setImagesWithAlt((prev) => [...prev, absoluteSrc]);
           }
         });
 
-        setImagesWithoutAlt(imagesWithoutAlt);
-        setImagesWithAlt(imagesWithAlt);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error(error);
-        alert('A apărut o eroare. Verificați consola pentru detalii.');
-        setLoading(false);
-      });
+        // Extragem link-urile interne
+        const links = doc.querySelectorAll('a[href]');
+        links.forEach((link) => {
+          const href = link.getAttribute('href');
+          if (href) {
+            const absoluteHref = new URL(href, currentUrl).href;
+            // Verificăm dacă link-ul este în același domeniu și nu este un fragment (#)
+            if (absoluteHref.startsWith(domain) && !absoluteHref.includes('#')) {
+              urlsToVisit.push(absoluteHref);
+            }
+          }
+        });
+      } catch (error) {
+        console.error(`Eroare la accesarea ${currentUrl}:`, error);
+      }
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -97,7 +142,7 @@ function App() {
       <Container maxWidth="md">
         <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Introduceți un URL pentru a scana imaginile fără atribut <code>alt</code>.
+            Introduceți un URL pentru a scana întregul site pentru imagini fără atribut <code>alt</code>.
           </Typography>
           <Box
             sx={{
@@ -117,17 +162,17 @@ function App() {
             <Button
               variant="contained"
               color="primary"
-              onClick={handleScan}
+              onClick={handleScanSite}
               sx={{ minWidth: isMobile ? '100%' : '150px' }}
             >
-              Scanează
+              Scanează Site-ul
             </Button>
           </Box>
           {loading && (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <CircularProgress />
               <Typography variant="body1" sx={{ mt: 2 }}>
-                Se încarcă...
+                Se scanează site-ul. Acest proces poate dura câteva minute...
               </Typography>
             </Box>
           )}
