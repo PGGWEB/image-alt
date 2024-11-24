@@ -1,0 +1,177 @@
+/* Resetări de bază */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Stiluri pentru corpul paginii */
+body {
+  font-family: "Roboto", sans-serif;
+  background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+  color: #ecf0f1;
+  min-height: 100vh;
+}
+
+/* Container principal centrat */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Card centrat cu efect de glassmorphism */
+.card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Titlu și subtitlu */
+.card h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #ecf0f1;
+}
+
+.card p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #bdc3c7;
+}
+
+/* Grupul de input și buton */
+.input-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.input-group input[type="text"] {
+  width: 70%;
+  padding: 15px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 30px 0 0 30px;
+  outline: none;
+  color: #2c3e50;
+}
+
+.input-group .button {
+  padding: 15px 30px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 0 30px 30px 0;
+  background: #3498db;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.input-group .button:hover {
+  background: #2980b9;
+}
+
+/* Loader */
+.loader {
+  border: 8px solid rgba(255, 255, 255, 0.2);
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Rezultate */
+.result {
+  text-align: left;
+  margin-top: 30px;
+}
+
+.result h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #ecf0f1;
+}
+
+.result p {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #bdc3c7;
+}
+
+.result ul {
+  list-style: none;
+  padding: 0;
+}
+
+.result li {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  word-break: break-all;
+  transition: background 0.3s;
+}
+
+.result li:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Mesaj de eroare */
+.error-message {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+/* Design Responsiv */
+@media (max-width: 768px) {
+  .card {
+    padding: 30px 20px;
+  }
+
+  .card h1 {
+    font-size: 2rem;
+  }
+
+  .input-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-group input[type="text"] {
+    width: 100%;
+    border-radius: 30px;
+    margin-bottom: 15px;
+  }
+
+  .input-group .button {
+    width: 100%;
+    border-radius: 30px;
+  }
+}
