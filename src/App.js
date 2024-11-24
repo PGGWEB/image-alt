@@ -150,7 +150,13 @@ function App() {
                   </Typography>
                   <List>
                     {imagesWithoutAlt.map((src, index) => (
-                      <ListItem key={index} component="a" href={src} target="_blank" rel="noopener noreferrer">
+                      <ListItem
+                        key={index}
+                        component="a"
+                        href={src}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <ListItemText primary={src} />
                       </ListItem>
                     ))}
